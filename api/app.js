@@ -20,22 +20,26 @@ orderbook.getExchanges()
 				}
 
 				socket.on('subscribe', (data) => {
-					console.log(`got subscription for market (${data.market}) at exchanges (${data.exchanges})`)
+					console.log(`got subscription for market (${data.market}) at exchanges (${data.exchanges}) with `
+						+ data.refreshEnabled
+							? `refresh rate (${data.refreshRate})`
+							: `refresh disabled`)
+
+					stopFeed()
 
 					async function feed() {
 						console.log(`retrieving order books for market (${data.market}) at exchanges (${data.exchanges})`)
 						socket.emit('feed', await orderbook.getOrderBooks(data.exchanges, data.market, data.bins))
-						timeout = setTimeout(feed, data.refreshRate ? data.refreshRate : 30000)
+						if (data.refreshEnabled) timeout = setTimeout(feed, data.refreshRate ? data.refreshRate : 30000)
 					}
 
-					feed()
+					feed().catch(e => {
+						console.error('Error retrieving feed:', e)
+						socket.emit('feedFailure', e)
+					})
 				})
 
 				socket.on('disconnect', () => {
-					stopFeed()
-				})
-
-				socket.on('unsubscribe', () => {
 					stopFeed()
 				})
 			})

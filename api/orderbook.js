@@ -22,25 +22,33 @@ function getOrderBook(exchange, symbol) {
 }
 
 async function getOrderBooks(exchanges, symbol, bins) {
-	let orderBooks = await Promise.all(exchanges.map(async (exchange) => {
-		let orderBook = await getOrderBook(exchange, symbol)
-		return {
-			bids: orderBook.bids,
-			asks: orderBook.asks,
-			name: exchange
+	let orderBooks = (await Promise.all(exchanges.map(async (exchange) => {
+		try {
+			let orderBook = await getOrderBook(exchange, symbol)
+			return {
+				bids: orderBook.bids,
+				asks: orderBook.asks,
+				name: exchange
+			}
+		} catch (e) {
+			console.error('Error retrieving order book:', e)
+			return null
 		}
-	}))
-
-	let allBids = orderBooks.map(orderbook => orderbook.bids.map(bid => bid[0])).reduce((acc, val) => acc.concat(val), [])
-	let allAsks = orderBooks.map(orderbook => orderbook.asks.map(ask => ask[0])).reduce((acc, val) => acc.concat(val), [])
+	}))).filter(orderbook => orderbook !== null)
 
 	let bidsBins = histogram({
-		data: allBids,
+		data: orderBooks
+			.map(orderbook => orderbook.bids
+				.map(bid => bid[0])) // price
+			.reduce((acc, val) => acc.concat(val), []),
 		bins: bins
 	})
 
 	let asksBins = histogram({
-		data: allAsks,
+		data: orderBooks
+			.map(orderbook => orderbook.asks
+				.map(ask => ask[0])) // price
+			.reduce((acc, val) => acc.concat(val), []),
 		bins: bins
 	})
 

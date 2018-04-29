@@ -3,7 +3,7 @@
     <v-toolbar fixed app>
       <v-spacer/>
       <v-toolbar-title>
-        order book combinator
+        <strong>price</strong> level <small>center</small>
       </v-toolbar-title>
       <v-spacer/>
       <v-btn @click="toggleDark" flat icon>
@@ -22,6 +22,7 @@
       </v-layout>
     </v-container>
     <v-footer fixed app>
+      <span class="ml-3">contact: <a href="mailto:jared@pricelevel.center">jared@pricelevel.center</a></span>
       <v-spacer/>
       <span class="mr-2">socket status: </span>
       <span v-if="connected" class="mr-3 green--text">connected</span>
@@ -35,19 +36,18 @@ import { mapState } from 'vuex'
 
 export default {
   data () {
-    return {
-      dark: true
-    }
+    return {}
   },
   methods: {
     toggleDark: function () {
-      this.dark = !this.dark
+      this.$store.commit('toggleDark')
     }
   },
   computed: {
     ...mapState([
       'connected',
-      'exchanges'
+      'exchanges',
+      'dark'
     ]),
     ready () {
       return this.connected && this.exchanges.length > 0

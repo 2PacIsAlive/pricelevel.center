@@ -8,7 +8,8 @@ export default new Vuex.Store({
   state: {
     connected: false,
     exchanges: [],
-    data: null
+    data: null,
+    dark: false
   },
   mutations: {
     SOCKET_CONNECT: (state, status) => {
@@ -34,6 +35,9 @@ export default new Vuex.Store({
         bins: 10
       }))
       state.data = data
+    },
+    toggleDark: (state) => {
+      state.dark = !state.dark
     }
   },
   actions: {
