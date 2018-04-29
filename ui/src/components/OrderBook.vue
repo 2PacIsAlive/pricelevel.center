@@ -8,7 +8,10 @@
             :options="bidsChart"
             auto-resize>
           </chart>
-          <v-progress-linear indeterminate v-else/>
+          <v-progress-linear
+            indeterminate
+            v-else>
+          </v-progress-linear>
         </v-card>
       </v-flex>
       <v-flex xs12 lg6 key="2">
@@ -18,7 +21,10 @@
             :options="asksChart"
             auto-resize>
           </chart>
-          <v-progress-linear indeterminate v-else/>
+          <v-progress-linear
+            indeterminate
+            v-else>
+          </v-progress-linear>
         </v-card>
       </v-flex>
       <v-flex xs12 sm8 key="3">
@@ -31,8 +37,8 @@
           hint="Choose a list of exchanges to monitor"
           persistent-hint
           chips
-          autocomplete
-        ></v-select>
+          autocomplete>
+        </v-select>
       </v-flex>
       <v-flex xs12 sm4 key="4">
         <v-select
@@ -43,8 +49,8 @@
           hint="Choose a market to monitor"
           persistent-hint
           chips
-          autocomplete
-        ></v-select>
+          autocomplete>
+        </v-select>
       </v-flex>
       <v-flex xs12 sm6 key="5">
         <v-slider
@@ -61,11 +67,18 @@
           :label="refreshSliderLabel">
         </v-slider>
       </v-flex>
-      <v-flex align-end xs12 key="7">
+      <v-flex xs12 key="7">
         <v-switch
           label="refresh"
-          v-model="selected.refreshEnabled"
-        ></v-switch>
+          v-model="selected.refreshEnabled">
+        </v-switch>
+      </v-flex>
+      <v-flex xs12 key="8">
+        <v-alert
+          type="error"
+          :value="errors.feed"
+          v-text="errors.feed">
+        </v-alert>
       </v-flex>
     </v-layout>
   </v-container>
@@ -79,6 +92,9 @@
   export default {
     data () {
       return {
+        errors: {
+          feed: false
+        },
         selected: {
           exchanges: ['bittrex', 'poloniex', 'binance', 'gdax', 'kraken'],
           market: 'ETH/BTC',
@@ -114,15 +130,21 @@
     sockets: {
       // TODO: move this to store?
       feed: function (data) {
-        ['bids', 'asks'].forEach(side => {
-          this.chart[side].data = data.orderBooks.map(exchange => {
-            return {
-              name: exchange.name,
-              data: exchange.binned[side]
-            }
+        if (data.orderBooks.length > 0) {
+          this.errors.feed = false
+          Array.from(['bids', 'asks']).forEach(side => {
+            this.chart[side].data = data.orderBooks.map(exchange => {
+              return {
+                name: exchange.name,
+                data: exchange.binned[side]
+              }
+            })
+            this.chart[side].bins = data.bins[side]
           })
-          this.chart[side].bins = data.bins[side]
-        })
+        } else {
+          this.chart = this.freshChartData()
+          this.errors.feed = `None of the selected exchanges trade ${this.selected.market}`
+        }
       }
     },
     computed: {
