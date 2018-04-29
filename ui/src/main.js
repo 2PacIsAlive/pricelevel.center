@@ -22,7 +22,9 @@ Vue.use(Vuetify, { theme: {
   warning: '#FFC107'
 }})
 
-Vue.use(VueSocketio, io('http://localhost:8081'), store)
+Vue.use(VueSocketio, io('http://pricelevel.center', {
+  path: '/api'
+}), store)
 
 Vue.config.productionTip = false
 

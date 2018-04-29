@@ -6,7 +6,7 @@ const orderbook = require('./orderbook')
 orderbook.getExchanges()
 	.then((exchanges) => {
 
-		http.listen(8081, () => {
+		http.listen(8081, '127.0.0.1', () => {
 			console.log('listening on *:8081')
 
 			io.on('connection', (socket) => {
