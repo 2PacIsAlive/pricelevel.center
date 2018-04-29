@@ -12,6 +12,8 @@
     "ccxt": "^1.13.50",
     "express": "^4.16.3",
     "histogramjs": "0.0.1",
+    "log4js": "^2.5.3",
+    "node-cache": "^4.2.0",
     "poloniex-api-node": "^1.8.1",
     "socket.io": "^2.1.0"
   }

@@ -1,100 +1,126 @@
 const ccxt = require('ccxt');
 const histogram = require('histogramjs')
+const logger = require('./logger')
 
-function getExchanges() {
-	//return Promise.resolve([{name: 'poloniex', symbols: ['ETH/BTC']}])
-	return Promise.all(ccxt.exchanges.map(async (exchange) => {
-		try {
-			let markets = await new ccxt[exchange]().fetchMarkets()
-			return {
-				name: exchange,
-				symbols: markets.map(market => market.symbol)
-			}
-		} catch (e) {
-			console.error(`ERROR: couldn't load markets for ${exchange}`, e)
-		}
-	}))
+const log = logger.getLogger('orderbook')
+
+/**
+ * Retrieves a promise resolving to all list of all exchanges,
+ * each containing a list of the symbols they support.
+ */
+async function getExchanges() {
+  log.debug('getting exchange data')
+
+  return (await Promise.all(ccxt.exchanges.map(async (exchange) => {
+    try {
+      let markets = await new ccxt[exchange]().fetchMarkets()
+      return {
+        name: exchange,
+        symbols: markets.map(market => market.symbol)
+      }
+    } catch (e) {
+      log.error(`couldn't load markets for ${exchange}`, e)
+      return null
+    }
+  }))).filter(exchange => exchange !== null)
 }
 
-function getOrderBook(exchange, symbol) {
-	// TODO find a way to prevent instantiating exchange instance every time
-	return new ccxt[exchange]().fetchL2OrderBook(symbol)
+/**
+ * Retrieves the l2 (price-aggregated) order book for the
+ * specified exchange and symbol. Data is returned from
+ * the provided cache if it is present, and added to the
+ * provided cache if absent.
+ */
+async function getOrderBook(cache, exchange, symbol) {
+  log.debug(`getting order book for ${symbol} at ${exchange}`)
+
+  let cacheKey = `${exchange}_${symbol}`
+  let cachedData = cache.get(cacheKey)
+
+  if (cachedData) {
+    log.debug(`cache hit for ${cacheKey}`)
+    return Promise.resolve(cachedData)
+  }
+
+  log.debug(`cache miss for ${cacheKey}`)
+  // TODO: don't instantiate exchange instance every time
+  let data = await new ccxt[exchange]().fetchL2OrderBook(symbol)
+  cache.set(cacheKey, data)
+  return Promise.resolve(data)
 }
 
-async function getOrderBooks(exchanges, symbol, bins) {
-	let orderBooks = (await Promise.all(exchanges.map(async (exchange) => {
-		try {
-			let orderBook = await getOrderBook(exchange, symbol)
-			return {
-				bids: orderBook.bids,
-				asks: orderBook.asks,
-				name: exchange
-			}
-		} catch (e) {
-			console.error('Error retrieving order book:', e)
-			return null
-		}
-	}))).filter(orderbook => orderbook !== null)
+/**
+ * Retrieves raw data for all specified order books along
+ * with aggregated data split into the specified number
+ * of bins.
+ *
+ * TODO: break this down into more manageable methods
+ */
+async function combineOrderBooks(cache, exchanges, symbol, bins) {
+  log.debug(`combining order books for ${symbol} at ${exchanges}`)
 
-	let bidsBins = histogram({
-		data: orderBooks
-			.map(orderbook => orderbook.bids
-				.map(bid => bid[0])) // price
-			.reduce((acc, val) => acc.concat(val), []),
-		bins: bins
-	})
+  let orderBooks = (await Promise.all(exchanges.map(async (exchange) => {
+    try {
+      let orderBook = await getOrderBook(cache, exchange, symbol)
+      return {
+        bids: orderBook.bids,
+        asks: orderBook.asks,
+        name: exchange
+      }
+    } catch (e) {
+      log.error('couldn\'t retrieve order book:', e)
+      return null
+    }
+  }))).filter(orderBook => orderBook !== null)
 
-	let asksBins = histogram({
-		data: orderBooks
-			.map(orderbook => orderbook.asks
-				.map(ask => ask[0])) // price
-			.reduce((acc, val) => acc.concat(val), []),
-		bins: bins
-	})
+  let sides = ['bids', 'asks']
 
-	try {
-		orderBooks.map(orderBook => {
-			let binnedBids = []
-			orderBook.bids.forEach(bid => {
-				for (let i = 0; i < bidsBins.length; i++) {
-					if (bid[0] <= bidsBins[i].x) {
-						binnedBids[i] = binnedBids[i] ? binnedBids[i] += bid[1] : bid[1]
-						break
-					}
-				}
-			})
-			let binnedAsks = []
-			orderBook.asks.forEach(ask => {
-				for (let i = 0; i < asksBins.length; i++) {
-					if (ask[0] <= asksBins[i].x) {
-						binnedAsks[i] = binnedAsks[i] ? binnedAsks[i] += ask[1] : ask[1]
-						break
-					}
-				}
-			})
-			orderBook.binnedBids = binnedBids
-			orderBook.binnedAsks = binnedAsks
-			return orderBook
-		})
-	} catch (e)
-	{ console.error(e)}
-	return {
-		bins: {
-			asks: asksBins.map(bin => bin.x),
-			bids: bidsBins.map(bin => bin.x)
-		},
-		orderBooks: orderBooks
-	}
-	// let xAxis = histogram({
-	// 	data: orderBooks.map(orderBook => orderBook.asks.map(ask => ask[0])).flatten(),
-	// 	bins: 10
-	// })
+  let orderBookBins = sides.reduce((acc, side) => {
+    acc[side] = histogram({
+      data: orderBooks
+        .map(orderBook => orderBook[side]
+          .map(entry => entry[0])) // price
+        .reduce((acc, val) => acc.concat(val), []),
+      bins: bins
+    })
+    return acc
+  }, {})
 
+  orderBooks.map(orderBook => {
+    let binned = {
+      bids: [],
+      asks: []
+    }
+
+    sides.forEach(side => {
+      orderBook[side].forEach(entry => {
+        // add order book entry amount to appropriate bin
+        for (let i = 0; i < orderBookBins[side].length; i++) {
+          if (entry[0] /* price */ <= orderBookBins[side][i].x) {
+            binned[side][i] = binned[side][i]
+              ? binned[side][i] += entry[1] // bin total + amount
+              : entry[1] // amount
+            break
+          }
+        }
+      })
+    })
+
+    orderBook.binned = binned
+    return orderBook
+  })
+
+  return {
+    bins: {
+      asks: orderBookBins.asks.map(bin => bin.x),
+      bids: orderBookBins.bids.map(bin => bin.x)
+    },
+    orderBooks: orderBooks
+  }
 }
 
 module.exports = {
-	getExchanges: getExchanges,
-	getOrderBook: getOrderBook,
-	getOrderBooks: getOrderBooks
-
+  getExchanges: getExchanges,
+  getOrderBook: getOrderBook,
+  combineOrderBooks: combineOrderBooks
 }

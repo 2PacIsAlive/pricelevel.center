@@ -22,7 +22,9 @@
       </v-layout>
     </v-container>
     <v-footer fixed app>
-      <span class="ml-3">contact: <a href="mailto:jared@pricelevel.center">jared@pricelevel.center</a></span>
+      <span class="ml-3">
+        contact: <a href="mailto:jared@pricelevel.center" v-text="contact"></a>
+      </span>
       <v-spacer/>
       <span class="mr-2">socket status: </span>
       <span v-if="connected" class="mr-3 green--text">connected</span>
@@ -36,7 +38,9 @@ import { mapState } from 'vuex'
 
 export default {
   data () {
-    return {}
+    return {
+      contact: 'jared@pricelevel.center'
+    }
   },
   methods: {
     toggleDark: function () {
