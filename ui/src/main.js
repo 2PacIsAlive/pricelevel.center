@@ -7,6 +7,7 @@ import store from './store'
 import VueSocketio from 'vue-socket.io'
 import io from 'socket.io-client'
 import ECharts from 'vue-echarts'
+import VueHighlightJS from 'vue-highlightjs'
 import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css'
 
@@ -21,6 +22,8 @@ Vue.use(Vuetify, { theme: {
   success: '#4CAF50',
   warning: '#FFC107'
 }})
+
+Vue.use(VueHighlightJS)
 
 // Vue.use(VueSocketio, io('http://pricelevel.center', {
 //   path: '/api'

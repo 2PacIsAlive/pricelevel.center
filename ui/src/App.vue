@@ -6,10 +6,25 @@
         <strong>price</strong> level <small>center</small>
       </v-toolbar-title>
       <v-spacer/>
-      <v-btn @click="toggleDark" flat icon>
-        <v-icon v-if="dark">brightness_5</v-icon>
-        <v-icon v-else>brightness_4</v-icon>
-      </v-btn>
+      <v-tooltip v-if="$route.path === '/docs'" bottom>
+        <v-btn @click="$router.push('/')" slot="activator" flat icon>
+          <v-icon>insert_chart</v-icon>
+        </v-btn>
+        <span>data</span>
+      </v-tooltip>
+      <v-tooltip v-else bottom>
+        <v-btn @click="$router.push('/docs')" slot="activator" flat icon>
+          <v-icon>library_books</v-icon>
+        </v-btn>
+        <span>api docs</span>
+      </v-tooltip>
+      <v-tooltip bottom>
+        <v-btn @click="toggleDark" slot="activator" flat icon>
+          <v-icon v-if="dark">brightness_5</v-icon>
+          <v-icon v-else>brightness_4</v-icon>
+        </v-btn>
+        <span>theme</span>
+      </v-tooltip>
     </v-toolbar>
     <v-container v-if="ready" class="mt-5">
       <router-view/>
