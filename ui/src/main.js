@@ -25,10 +25,12 @@ Vue.use(Vuetify, { theme: {
 
 Vue.use(VueHighlightJS)
 
-// Vue.use(VueSocketio, io('http://pricelevel.center', {
-//   path: '/api'
-// }), store)
-Vue.use(VueSocketio, io('http://localhost:8081'), store)
+Vue.use(VueSocketio, io('http://pricelevel.center', {
+  path: '/api'
+}), store)
+
+// TODO: better way to enable for local dev
+// Vue.use(VueSocketio, io('http://localhost:8081'), store)
 
 Vue.config.productionTip = false
 
