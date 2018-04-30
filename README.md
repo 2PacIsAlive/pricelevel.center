@@ -20,8 +20,11 @@ npm run build && \
 cp -r dist/* /var/www/html/
 ```
 
-### tests
+### unit tests
 ```bash
 cd $PRICE_LEVEL_CENTER/api && \
 npm test
+
+cd $PRICE_LEVEL_CENTER/ui && \
+npm run unit
 ```

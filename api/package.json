@@ -4,7 +4,7 @@
   "description": "Crypto order books, combined",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "author": "Jared Jolton <jared.jolton@gmail.com>",
   "license": "ISC",
@@ -16,5 +16,8 @@
     "node-cache": "^4.2.0",
     "poloniex-api-node": "^1.8.1",
     "socket.io": "^2.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^5.1.1"
   }
 }
