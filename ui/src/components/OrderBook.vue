@@ -46,7 +46,7 @@
           :items="markets"
           v-model="selected.market"
           max-height="400"
-          hint="Choose a market to monitor"
+          hint="Choose a market to monitor (base/quote)"
           persistent-hint
           chips
           autocomplete>
