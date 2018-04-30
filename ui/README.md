@@ -1,4 +1,4 @@
-# order-book-combos-ui
+# price-level-center-ui
 
 > Crypto order books, combined
 
