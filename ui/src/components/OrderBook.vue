@@ -73,7 +73,7 @@
           v-model="selected.refreshEnabled">
         </v-switch>
       </v-flex>
-      <v-flex xs12 key="8">
+      <v-flex xs4 key="8">
         <v-alert
           type="error"
           :value="errors.feed"
