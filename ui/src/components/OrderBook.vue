@@ -114,6 +114,10 @@
         this.chart = this.freshChartData()
         this.debouncedSubscribe()
       },
+      'selected.exchanges': function (newVal, oldVal) {
+        this.chart = this.freshChartData()
+        this.debouncedSubscribe()
+      },
       'selected.bins': function (newVal, oldVal) {
         this.chart = this.freshChartData()
         this.debouncedSubscribe()
