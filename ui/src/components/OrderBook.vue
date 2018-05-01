@@ -204,10 +204,10 @@
           },
           color: side === 'asks'
             ? tinygradient('darkred', 'lightpink')
-              .rgb(this.selected.exchanges.length)
+              .rgb(this.selected.exchanges.length + 1)
               .map(color => color.toHexString())
             : tinygradient('darkgreen', 'lightgreen')
-              .rgb(this.selected.exchanges.length)
+              .rgb(this.selected.exchanges.length + 1)
               .map(color => color.toHexString()),
           tooltip: {
             trigger: 'axis',
